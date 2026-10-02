@@ -43,9 +43,10 @@ if [[ ! -r $features_file || ! -w $features_file ]]; then
   exit 1
 fi
 
+# The kernel prints both halves on one line: "features high: 0x... low: 0x...".
 read_features() {
   local label="$1"
-  awk -v label="$label" '$1 == "features" && $2 == label ":" { print $3 }' "$features_file"
+  awk -v label="$label:" '$1 == "features" { for (i = 2; i < NF; i++) if ($i == label) print $(i + 1) }' "$features_file"
 }
 
 features_high="$(read_features high)"

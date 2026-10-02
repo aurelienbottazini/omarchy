@@ -48,13 +48,19 @@ pass "nearby Apple Radeon hardware is not matched"
 write_hardware
 cmdline_file="$test_tmp/cmdline"
 features_file="$gpu_path/pp_features"
+
+# The kernel's pp_features layout: both halves on the first line, then the per-feature table.
+write_features() {
+  printf 'features high: 0x00000662 low: %s\n%s\n' "$1" 'No. Feature               Bit : State' >"$features_file"
+}
+
 printf '%s\n' 'quiet amdgpu.ppfeaturemask=0xfff7bffd splash' >"$cmdline_file"
-printf '%s\n%s\n' 'features high: 0x00000662' 'features low: 0xa3d9acb3' >"$features_file"
+write_features 0xa3d9acb3
 features_writer="$test_tmp/write-features"
 cat >"$features_writer" <<'SH'
 #!/bin/bash
 [[ $1 == "0x00000662a3d9afbb" ]] || exit 1
-printf '%s\n%s\n' 'features high: 0x00000662' 'features low: 0xa3d9afbb' >"$2"
+printf 'features high: 0x00000662 low: 0xa3d9afbb\n%s\n' 'No. Feature               Bit : State' >"$2"
 SH
 chmod +x "$features_writer"
 
@@ -66,19 +72,19 @@ PATH="$ROOT/bin:$PATH" \
   OMARCHY_KERNEL_CMDLINE="$cmdline_file" \
   "$enabler" >/dev/null
 
-grep -Fxq 'features low: 0xa3d9afbb' "$features_file" ||
+grep -Fxq 'features high: 0x00000662 low: 0xa3d9afbb' "$features_file" ||
   fail "the runtime helper restores UCLK and its voltage-scaling features" "$(cat "$features_file")"
 pass "the runtime helper restores UCLK and its voltage-scaling features"
 
 printf '%s\n' 'quiet splash' >"$cmdline_file"
-printf '%s\n%s\n' 'features high: 0x00000662' 'features low: 0xa3d9acb3' >"$features_file"
+write_features 0xa3d9acb3
 ! PATH="$ROOT/bin:$PATH" \
   OMARCHY_ALLOW_NON_ROOT_TEST=1 \
   OMARCHY_DMI_PRODUCT_NAME="$dmi_file" \
   OMARCHY_PCI_DEVICES_PATH="$pci_devices" \
   OMARCHY_KERNEL_CMDLINE="$cmdline_file" \
   "$enabler" >/dev/null 2>&1 || fail "the runtime helper requires the safe boot mask"
-grep -Fq 'features low: 0xa3d9acb3' "$features_file" || fail "a rejected runtime update leaves features unchanged"
+grep -Fxq 'features high: 0x00000662 low: 0xa3d9acb3' "$features_file" || fail "a rejected runtime update leaves features unchanged"
 pass "the runtime helper refuses to run without the safe boot mask"
 
 stub_bin="$test_tmp/bin"
