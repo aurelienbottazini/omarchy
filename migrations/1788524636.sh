@@ -11,6 +11,6 @@ sudo env \
   PATH="$system_path" \
   OMARCHY_IMAC20_AMDGPU_LIMINE_CONF="${OMARCHY_IMAC20_AMDGPU_LIMINE_CONF:-/etc/limine-entry-tool.d/imac20-amdgpu-uclk.conf}" \
   OMARCHY_IMAC20_AMDGPU_SYSTEMD_UNIT="${OMARCHY_IMAC20_AMDGPU_SYSTEMD_UNIT:-/etc/systemd/system/omarchy-imac20-amdgpu-uclk.service}" \
-  bash "$OMARCHY_PATH/install/hardware/apple/fix-imac20-amdgpu-uclk.sh"
+  bash -euo pipefail "$OMARCHY_PATH/install/hardware/apple/fix-imac20-amdgpu-uclk.sh"
 sudo limine-mkinitcpio
 sudo install -Dm644 /dev/null "$marker"
